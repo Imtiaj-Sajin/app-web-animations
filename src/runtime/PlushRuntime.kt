@@ -201,6 +201,9 @@ class PlushAnimation(json: String) {
             else -> emptyMap()
         }
     } ?: emptyMap()
+    val tapCycle: List<String> = root.optJSONObject("interact")?.optJSONArray("tap")?.let { a ->
+        List(a.length()) { a.getString(it) }
+    } ?: emptyList()
     val layers: List<PlushNode> = root.optJSONArray("layers")?.let { l -> List(l.length()) { PlushNode(l.getJSONObject(it)) } } ?: emptyList()
 }
 
@@ -223,8 +226,16 @@ class PlushPlayer(val animation: PlushAnimation, initialState: String? = null) {
     }
 
     /** Plays whatever the animation defines as its tap reaction for the current state. */
+    private var tapCount = 0
+
     fun tap() {
-        (animation.tap[state] ?: animation.tap["*"])?.let { play(it) }
+        val cycle = animation.tapCycle
+        if (cycle.isNotEmpty()) {
+            play(cycle[tapCount % cycle.size])
+            tapCount++
+        } else {
+            (animation.tap[state] ?: animation.tap["*"])?.let { play(it) }
+        }
     }
 
     fun advance(dt: Float, reduceMotion: Boolean) {

@@ -241,10 +241,12 @@ function renderFrame(ctx, data, frame, width, height, opts = {}) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-function nextStateFor(data, current) {
+/** tap: 'state' | ['a', 'b', …] (cycles on each tap) | { currentState: nextState, '*': fallback } */
+function nextStateFor(data, current, count) {
   const tap = data.interact && data.interact.tap;
   if (!tap) return null;
   if (typeof tap === 'string') return tap;
+  if (Array.isArray(tap)) return tap[count % tap.length];
   return tap[current] || tap['*'] || null;
 }
 
@@ -362,8 +364,9 @@ function createPlayer(canvas, data, options = {}) {
     schedule();
   }
 
+  let tapCount = 0;
   function tap() {
-    const next = nextStateFor(data, stateName);
+    const next = nextStateFor(data, stateName, tapCount++);
     if (next) play(next);
   }
 

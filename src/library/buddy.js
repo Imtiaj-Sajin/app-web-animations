@@ -4,7 +4,7 @@
  *
  * timeline: ordered list of segments, each { kind: 'idle'|'hop'|'jelly'|'wake', from, to, ... }
  */
-import { T, ease, hex, blob, ellipse, arc, rect, g, shape } from '../core/dsl.js';
+import { T, ease, hex, blob, ellipse, arc, rect, poly, heart, burst, g, shape } from '../core/dsl.js';
 
 export const INK = hex('#1B1B22');
 
@@ -98,6 +98,69 @@ const EVENTS = {
   },
 };
 
+Object.assign(EVENTS, {
+  love(tr, ev, o) {
+    const t = ev.from;
+    const top = 212 - o.body.ry;
+    moodEyes(tr, o, tr.heartO, t + 6, t + 96);
+    tr.heartS.hold(t + 6).to(t + 7, [0.3, 0.3], null).to(t + 16, [1.25, 1.25], ease.out).to(t + 22, [1, 1], ease.inOut)
+      .oscillate([1.2, 1.2], 16, t + 94);
+    tr.jumpS.to(t + 6, [1.08, 0.92], ease.out).spring([1, 1], { stiffness: 260, damping: 12 });
+    tr.jumpR.hold(t + 10).oscillate(5, 40, t + 90);
+    tr.blushO.to(t + 14, 1, ease.out).hold(t + 96).to(t + 110, ev.blushRest ?? 0, ease.inOut);
+    tr.floaters.forEach((f, k) => {
+      const s0 = t + 12 + k * 16;
+      const x = [168, 232, 200][k];
+      f.p.set(s0, [x, top + 10]).to(s0 + 60, [x + (k % 2 ? 22 : -22), top - 80], ease.out);
+      f.o.hold(s0).to(s0 + 6, 1, ease.out).hold(s0 + 44).to(s0 + 60, 0, ease.in);
+      f.s.set(s0, [0.4, 0.4]).to(s0 + 14, [1, 1], ease.out);
+    });
+  },
+
+  grumpy(tr, ev, o) {
+    const t = ev.from;
+    const top = 212 - o.body.ry;
+    if (o.sleepy) moodEyes(tr, o, tr.openO, t + 4, t + 96);
+    tr.eyesS.to(t + 6, [1, 0.62], ease.out).hold(t + 84).to(t + 94, [1, 1], ease.inOut);
+    tr.browsO.hold(t + 4).to(t + 6, 1, null).hold(t + 92).to(t + 95, 0, null);
+    tr.smileO.hold(t + 4).to(t + 6, 0, null).hold(t + 92).to(t + 95, 1, null);
+    tr.frownO.hold(t + 4).to(t + 6, 1, null).hold(t + 92).to(t + 95, 0, null);
+    tr.redO.to(t + 20, 0.16, ease.out).hold(t + 80).to(t + 96, 0, ease.inOut);
+    tr.jumpS.to(t + 12, [1.07, 0.95], ease.out).hold(t + 80).to(t + 92, [1, 1], ease.inOut);
+    tr.giggle.hold(t + 20).oscillate([203.5, GROUND], 4, t + 60);
+    tr.angerO.hold(t + 10).to(t + 11, 1, null).hold(t + 88).to(t + 94, 0, ease.in);
+    tr.angerS.hold(t + 10).to(t + 11, [0.3, 0.3], null).to(t + 18, [1.2, 1.2], ease.out).to(t + 22, [1, 1], ease.inOut)
+      .oscillate([1.18, 1.18], 12, t + 82);
+    tr.steam.forEach((f, k) => {
+      const s0 = t + 24 + k * 14;
+      const x = 132 - k * 10;
+      f.p.set(s0, [x, top + 30]).to(s0 + 44, [x - 26 + k * 8, top - 36], ease.out);
+      f.o.hold(s0).to(s0 + 4, 0.95, ease.out).hold(s0 + 28).to(s0 + 44, 0, ease.in);
+      f.s.set(s0, [0.4, 0.4]).to(s0 + 44, [1.3, 1.3], ease.out);
+    });
+  },
+
+  party(tr, ev, o) {
+    const t = ev.from;
+    tr.hatO.hold(t + 4).to(t + 5, 1, null).hold(t + 112).to(t + 120, 0, ease.in);
+    tr.hatS.hold(t + 4).to(t + 5, [0.2, 0.2], null).spring([1, 1], { stiffness: 320, damping: 11 }).hold(t + 108).to(t + 120, [0.2, 0.2], ease.in);
+    tr.hatR.hold(t + 4).to(t + 5, -30, null).spring(10, { stiffness: 260, damping: 9 });
+    tr.jumpS.to(t + 10, [1.12, 0.86], ease.out).to(t + 22, [0.9, 1.12], ease.out).to(t + 30, [1, 1], ease.inOut)
+      .to(t + 40, [0.95, 1.06], ease.in).to(t + 45, [1.16, 0.84], ease.out).spring([1, 1], { stiffness: 260, damping: 14 });
+    tr.jumpP.hold(t + 10).to(t + 28, [200, GROUND - 36], ease.out).to(t + 42, [200, GROUND], ease.in);
+    tr.shadowS.hold(t + 10).to(t + 28, [0.78, 0.78], ease.out).to(t + 42, [1, 1], ease.in);
+    moodEyes(tr, o, tr.happyO, t + 8, t + 104);
+    openMouth(tr, t + 10, t + 104, [1, 1]);
+    tr.blushO.to(t + 16, 1, ease.out).hold(t + 104).to(t + 118, ev.blushRest ?? 0, ease.inOut);
+  },
+});
+
+function moodEyes(tr, o, target, on, off) {
+  const rest = o.sleepy ? tr.sleepyO : tr.openO;
+  rest.hold(on).to(on + 2, 0, null).hold(off).to(off + 2, 1, null);
+  target.hold(on).to(on + 2, 1, null).hold(off).to(off + 2, 0, null);
+}
+
 function swapEyes(tr, kind, on, off) {
   const target = kind === 'happy' ? tr.happyO : tr.sleepyO;
   tr.openO.hold(on).to(on + 3, 0, null).hold(off).to(off + 3, 1, null);
@@ -139,6 +202,12 @@ export function buddy(o) {
     shadowO: T(1),
     z: sleepy ? [0, 1].map(() => ({ p: T([262, 150]), o: T(0), s: T([0.6, 0.6]), r: T(-8) })) : [],
     bang: { o: T(0), s: T([1, 1]), r: T(10) },
+    heartO: T(0), heartS: T([1, 1]),
+    floaters: [0, 1, 2].map(() => ({ p: T([200, 100]), o: T(0), s: T([0.4, 0.4]) })),
+    browsO: T(0), frownO: T(0), redO: T(0),
+    steam: [0, 1].map(() => ({ p: T([200, 100]), o: T(0), s: T([0.4, 0.4]) })),
+    hatO: T(0), hatS: T([1, 1]), hatR: T(10),
+    angerO: T(0), angerS: T([1, 1]),
   };
   const all = [];
   const collect = (v) => {
@@ -156,6 +225,7 @@ export function buddy(o) {
   all.forEach((t) => t.hold(o.end));
 
   const color = hex(o.color);
+  const hatBase = 212 - o.body.ry + 10;
   const eye = (cx) => shape(ellipse(cx, 204, 7.5, 10.5), { fill: INK });
   const lid = (cx, a0, a1) => shape(arc(cx, 206, 9, a0, a1, 2), { stroke: { c: INK, w: 4.6 } });
   const z = (zt, idx) => g({ p: zt.p, a: [0, 0], s: zt.s, r: zt.r, o: zt.o }, [
@@ -176,6 +246,7 @@ export function buddy(o) {
         // the leftover crescent reads as soft form shadow that follows every wobble.
         shape(tr.body, { fill: hex(o.shade) }),
         g({ a: [200, 212], p: [195, 205], s: [0.955, 0.95] }, [shape(tr.body, { fill: color })]),
+        g({ o: tr.redO }, [shape(tr.body, { fill: hex('#FF2D2D') })]),
         shape(ellipse(150, 146, 26, 13), { fill: hex('#FFFFFF', 0.28), a: [150, 146], p: [150, 146], r: -32 }),
         g({ id: X('face'), a: FACE, p: tr.faceP }, [
           g({ o: tr.blushO }, [
@@ -187,14 +258,41 @@ export function buddy(o) {
           ]),
           g({ o: tr.happyO }, [lid(173, 205, 335), lid(227, 205, 335)]),
           g({ o: tr.sleepyO }, [lid(173, 25, 155), lid(227, 25, 155)]),
+          g({ o: tr.heartO }, [173, 227].map((x) => g({ a: [x, 204], p: [x, 204], s: tr.heartS }, [
+            shape(heart(x, 204, 30), { fill: hex('#FF3B6B'), stroke: { c: INK, w: 3 } }),
+          ]))),
+          g({ o: tr.browsO }, [
+            shape(poly([[156, 180], [187, 190]]), { stroke: { c: INK, w: 5.5 } }),
+            shape(poly([[244, 180], [213, 190]]), { stroke: { c: INK, w: 5.5 } }),
+          ]),
+          g({ o: tr.frownO }, [shape(arc(200, 238, 11, 205, 335, 2), { stroke: { c: INK, w: 4.4 } })]),
           g({ o: tr.smileO }, [shape(arc(200, 222, 11, 25, 155, 2), { stroke: { c: INK, w: 4.4 } })]),
           g({ a: [200, 228], p: [200, 228], s: tr.mouthS, o: tr.mouthO }, [
             shape({ ...arc(200, 226, 14, 0, 180, 2), c: true }, { fill: hex('#2A1214') }),
             shape(ellipse(200, 235, 7, 3.6), { fill: hex('#FF7A86') }),
           ]),
         ]),
+        g({ a: [264, hatBase + 22], p: [264, hatBase + 22], s: tr.angerS, o: tr.angerO }, [
+          ...[[-1, -1, 0], [1, -1, 90], [1, 1, 180], [-1, 1, 270]].map(([sx, sy, a0]) =>
+            shape(arc(264 + sx * 13, hatBase + 22 + sy * 13, 10, a0, a0 + 90, 1), { stroke: { c: hex('#FF2D55'), w: 5.5 } })),
+        ]),
+        g({ a: [200, hatBase], p: [200, hatBase], s: tr.hatS, r: tr.hatR, o: tr.hatO }, [
+          shape(poly([[174, hatBase + 2], [226, hatBase + 2], [204, hatBase - 52]], true), { fill: hex('#FF5FA2'), stroke: { c: INK, w: 4 } }),
+          shape(ellipse(194, hatBase - 12, 4.5), { fill: hex('#FFD23F') }),
+          shape(ellipse(211, hatBase - 24, 4), { fill: hex('#FFFFFF') }),
+          shape(ellipse(201, hatBase - 36, 3.5), { fill: hex('#FFD23F') }),
+          shape(ellipse(204, hatBase - 56, 8), { fill: hex('#FFD23F'), stroke: { c: INK, w: 3 } }),
+        ]),
       ]),
     ]),
+    ...tr.floaters.map((f) => g({ p: f.p, a: [0, 0], s: f.s, o: f.o }, [shape(heart(0, 0, 26), { fill: hex('#FF3B6B'), stroke: { c: INK, w: 3 } })])),
+    ...tr.steam.map((f) => g({ p: f.p, a: [0, 0], s: f.s, o: f.o }, [
+      shape(ellipse(-8, 2, 11), { fill: hex('#FFFFFF'), stroke: { c: INK, w: 3 } }),
+      shape(ellipse(8, -4, 13), { fill: hex('#FFFFFF'), stroke: { c: INK, w: 3 } }),
+      shape(ellipse(-8, 2, 9.5), { fill: hex('#FFFFFF') }),
+    ])),
+    ...o.timeline.filter((ev) => ev.kind === 'party').flatMap((ev) => [ev.from + 26, ev.from + 58].flatMap((t) =>
+      burst(200, 150, { t, dur: 32, count: 10, r0: 70, r1: 170, size: 7, colors: ['#FF5FA2', '#FFD23F', '#2F6BFF', '#22C38E', o.color] }))),
     ...(sleepy ? tr.z.map(z) : []),
     g({ p: [300, 96], a: [0, 0], s: tr.bang.s, r: tr.bang.r, o: tr.bang.o }, [
       shape(rect(-6, -34, 12, 38, 6), { fill: INK }),
@@ -213,10 +311,14 @@ export const PALETTE = {
   bloo: { color: '#2F6BFF', shade: '#2458E0', blush: '#FF8FB1', bg: '#E7EDFF' },
   peach: { color: '#F0663A', shade: '#D84E24', blush: '#FFC0A8', bg: '#FFE8DF' },
   sunny: { color: '#F6B92B', shade: '#E5A010', blush: '#FF9C6B', bg: '#FFF2D3' },
+  minty: { color: '#2FBF71', shade: '#21A25D', blush: '#FFB3C1', bg: '#DDF6E8' },
+  lulu: { color: '#9B7BFF', shade: '#7F5CF0', blush: '#FFB0D9', bg: '#EEE8FF' },
 };
 
 export const BODIES = {
   bloo: { rx: 112, ry: 112, sq: 2.7, bumps: [[3, 0.035, 70], [2, 0.03, 10], [5, 0.012, 0]] },
   peach: { rx: 124, ry: 100, sq: 4.2, bumps: [[4, 0.03, 40], [6, 0.02, 200], [3, 0.025, 120]] },
   sunny: { rx: 130, ry: 96, sq: 3.4, bumps: [[2, 0.035, 200], [3, 0.03, 30], [5, 0.014, 90]] },
+  minty: { rx: 98, ry: 112, sq: 2.3, bumps: [[2, 0.05, 100], [3, 0.025, 10], [4, 0.012, 60]] },
+  lulu: { rx: 126, ry: 100, sq: 2.2, bumps: [[5, 0.045, 0], [2, 0.02, 120], [3, 0.015, 40]] },
 };

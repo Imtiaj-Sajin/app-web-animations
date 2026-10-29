@@ -227,6 +227,7 @@ public final class PlushAnimation {
     let poster: Double?
     let states: [String: PlushState]
     let tap: [String: String]
+    let tapCycle: [String]
     let layers: [PlushNode]
 
     public init(json: String) {
@@ -255,6 +256,7 @@ public final class PlushAnimation {
         } else {
             tap = interact["tap"] as? [String: String] ?? [:]
         }
+        tapCycle = interact["tap"] as? [String] ?? []
         layers = (root["layers"] as? [[String: Any]] ?? []).map { PlushNode($0) }
     }
 }
@@ -267,6 +269,7 @@ public final class PlushPlayer {
     public var onStateChange: ((String) -> Void)?
     private var frame: Double
     private var last: Date?
+    private var tapCount = 0
 
     public init(_ animation: PlushAnimation, state: String? = nil) {
         self.animation = animation
@@ -285,7 +288,12 @@ public final class PlushPlayer {
 
     /// Plays whatever the animation defines as its tap reaction for the current state.
     public func tap() {
-        if let next = animation.tap[state] ?? animation.tap["*"] { play(next) }
+        if !animation.tapCycle.isEmpty {
+            play(animation.tapCycle[tapCount % animation.tapCycle.count])
+            tapCount += 1
+        } else if let next = animation.tap[state] ?? animation.tap["*"] {
+            play(next)
+        }
     }
 
     func advance(to date: Date, reduceMotion: Bool) {

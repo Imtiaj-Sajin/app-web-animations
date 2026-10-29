@@ -18,6 +18,14 @@ const kb = (bytes) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1
 const catalog = await fetch('data/catalog.json').then((r) => r.json());
 const byId = Object.fromEntries(catalog.animations.map((a) => [a.id, a]));
 const packOf = (id) => catalog.packs.find((p) => p.items.includes(id));
+// Colourways of one character share a family; the library shows one card per family.
+const families = [];
+for (const a of catalog.animations) {
+  let fam = families.find((f) => f.id === a.family);
+  if (!fam) families.push((fam = { id: a.family, name: a.familyName ?? a.name, category: a.category, variants: [] }));
+  fam.variants.push(a);
+}
+const familyOf = (id) => families.find((f) => f.variants.some((v) => v.id === id));
 
 // ---------------------------------------------------------------- nav + hero
 
@@ -29,7 +37,7 @@ onScroll();
 document.querySelectorAll('[data-everything-size]').forEach((el) => (el.textContent = `· ${kb(catalog.everythingSize)}`));
 $('[data-stat="animations"]').textContent = catalog.animations.length;
 
-createPlayer($('#hero-canvas'), byId['buddies-trio']);
+createPlayer($('#hero-canvas'), byId['retro-club']);
 
 // ---------------------------------------------------------------- formats row
 
@@ -46,11 +54,14 @@ $('[data-formats]').append(
 // ---------------------------------------------------------------- packs
 
 $('[data-packs]').append(...catalog.packs.map((pack) => {
-  const stage = h('div', { class: 'pack-stage', style: { '--n': pack.items.length, '--accent': pack.color } });
+  const previews = pack.items.map((id) => byId[id]).filter((a, idx, all) => all.findIndex((b) => b.family === a.family) === idx);
+  const stage = h('div', { class: 'pack-stage', style: { '--n': previews.length, '--accent': pack.color } });
   const pk = h('article', { class: 'pack' },
     stage,
     h('div', { class: 'pack-body' },
-      h('p', { class: 'count' }, `${pack.items.length} animations · every format`),
+      h('p', { class: 'count' }, previews.length === pack.items.length
+        ? `${pack.items.length} animations · every format`
+        : `${previews.length} characters · ${pack.items.length} colourways · every format`),
       h('h3', {}, pack.name),
       h('p', {}, pack.description),
       h('div', { class: 'pack-actions' },
@@ -59,8 +70,7 @@ $('[data-packs]').append(...catalog.packs.map((pack) => {
       ),
     ),
   );
-  for (const id of pack.items) {
-    const a = byId[id];
+  for (const a of previews) {
     const c = h('canvas');
     stage.append(h('div', { class: 'mini', style: { '--tint': a.bg } }, c));
     createPlayer(c, a, { interactive: false });
@@ -71,27 +81,55 @@ $('[data-packs]').append(...catalog.packs.map((pack) => {
 // ---------------------------------------------------------------- library
 
 const grid = $('[data-grid]');
-const cards = catalog.animations.map((a) => {
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+function variantSwatches(fam, currentId, onPick, labelled = false) {
+  if (fam.variants.length < 2) return null;
+  return h('div', { class: `variants${labelled ? ' labelled' : ''}`, role: 'radiogroup', 'aria-label': `${fam.name} colourways` },
+    ...fam.variants.map((v) => h('button', {
+      class: 'variant', type: 'button', role: 'radio', 'aria-checked': String(v.id === currentId), 'data-variant': v.id,
+      'aria-label': v.variant, title: v.variant, style: { '--sw': v.swatch },
+      onclick: (e) => { e.stopPropagation(); onPick(v.id); },
+    }, h('i'), labelled ? v.variant : null)));
+}
+
+const cards = families.map((fam) => {
+  let a = fam.variants[0];
   const canvas = h('canvas');
-  const card = h('article', { class: `card${a.w / a.h > 1.5 && a.w > 500 ? ' wide' : ''}`, 'data-id': a.id, 'data-cat': a.category },
-    h('div', { class: 'card-stage', style: { '--tint': a.bg } },
-      canvas,
-      a.interact?.tap ? h('span', { class: 'card-badge' }, a.interact.look ? 'Tap · follows cursor' : 'Tap me') : null,
-    ),
+  const stageEl = h('div', { class: 'card-stage', style: { '--tint': a.bg } },
+    canvas,
+    a.interact?.tap ? h('span', { class: 'card-badge' }, a.interact.look ? 'Tap · follows cursor' : 'Tap me') : null,
+  );
+  const sub = h('p', {});
+  const title = h('h3', {}, fam.name);
+  let player = null;
+  const show = (id) => {
+    a = byId[id];
+    stageEl.style.setProperty('--tint', a.bg);
+    sub.textContent = fam.variants.length > 1
+      ? `${a.variant} · ${plural(fam.variants.length, 'colourway')}`
+      : `${a.category} · ${plural(Object.keys(a.states).length, 'state')}`;
+    canvas.setAttribute('aria-label', `${a.name} — ${a.description}`);
+    player?.destroy();
+    player = createPlayer(canvas, a);
+    swatches?.querySelectorAll('.variant').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.variant === id)));
+  };
+  const swatches = variantSwatches(fam, a.id, show);
+  const card = h('article', { class: `card${a.w / a.h > 1.5 && a.w > 500 ? ' wide' : ''}`, 'data-family': fam.id, 'data-cat': fam.category },
+    stageEl,
     h('div', { class: 'card-meta' },
-      h('div', {}, h('h3', {}, a.name), h('p', {}, `${a.category} · ${Object.keys(a.states).length} ${Object.keys(a.states).length === 1 ? 'state' : 'states'}`)),
-      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => openDetail(a.id), 'aria-label': `Get ${a.name}` }, 'Get'),
+      h('div', { class: 'card-text' }, title, sub, swatches),
+      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => openDetail(a.id), 'aria-label': `Get ${fam.name}` }, 'Get'),
     ),
   );
-  canvas.setAttribute('aria-label', `${a.name} — ${a.description}`);
-  createPlayer(canvas, a);
+  show(a.id);
   return card;
 });
 grid.append(...cards);
 
 const filterBar = $('[data-filters]');
 const categories = [...new Set(catalog.animations.map((a) => a.category))];
-const filters = [['all', 'All', catalog.animations.length], ...categories.map((c) => [c, c, catalog.animations.filter((a) => a.category === c).length])];
+const filters = [['all', 'All', families.length], ...categories.map((c) => [c, c, families.filter((f) => f.category === c).length])];
 let currentFilter = 'all';
 filterBar.append(...filters.map(([key, label, n]) =>
   h('button', { class: 'chip', type: 'button', 'data-filter': key, 'aria-pressed': String(key === 'all'), onclick: () => setFilter(key) }, label, h('span', { class: 'n' }, n)),
@@ -100,8 +138,8 @@ function setFilter(key) {
   currentFilter = key;
   const pack = key.startsWith('pack:') ? catalog.packs.find((p) => `pack:${p.id}` === key) : null;
   for (const card of cards) {
-    const id = card.dataset.id;
-    card.hidden = !(key === 'all' || card.dataset.cat === key || (pack && pack.items.includes(id)));
+    const fam = families.find((f) => f.id === card.dataset.family);
+    card.hidden = !(key === 'all' || card.dataset.cat === key || (pack && fam.variants.some((v) => pack.items.includes(v.id))));
   }
   filterBar.querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === key)));
 }
@@ -295,8 +333,10 @@ function openDetail(id, { push = true } = {}) {
   const pack = packOf(id);
   stage.style.setProperty('--tint', a.bg);
   $('[data-d-eyebrow]', dialog).textContent = pack ? `${a.category} · ${pack.name} pack` : a.category;
-  $('[data-d-title]', dialog).textContent = a.name;
+  $('[data-d-title]', dialog).textContent = a.familyName ?? a.name;
   $('[data-d-desc]', dialog).textContent = a.description;
+  const fam = familyOf(id);
+  $('[data-d-variants]', dialog).replaceChildren(variantSwatches(fam, id, (vid) => openDetail(vid, { push: false }), true) ?? '');
   $('[data-d-tags]', dialog).replaceChildren(...(a.tags || []).map((t) => h('li', {}, `#${t}`)));
   const all = $('[data-d-all]', dialog);
   all.href = `downloads/${a.id}/${a.id}-all-formats.zip`;
@@ -309,6 +349,7 @@ function openDetail(id, { push = true } = {}) {
   detailPlayer?.destroy();
   detailPlayer = createPlayer($('#detail-canvas'), a, { onStateChange: markState });
   if (push) history.pushState({ id }, '', `#/a/${id}`);
+  else if (location.hash !== `#/a/${id}`) history.replaceState({ id }, '', `#/a/${id}`);
 }
 
 dialog.addEventListener('close', () => {

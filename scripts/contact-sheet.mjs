@@ -1,6 +1,6 @@
 // Renders a contact sheet (N frames per animation) to an HTML file for visual QA in headless Chrome.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { animations } from '../src/library/index.js';
+const { animations } = await import(process.env.LIB ?? '../src/library/index.js');
 
 const [out, only, cols = '8'] = process.argv.slice(2);
 const runtime = readFileSync(new URL('../src/runtime/plush-player.js', import.meta.url), 'utf8').replace(/^export \{[^}]*\};?\s*$/m, '');
@@ -10,7 +10,8 @@ const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;backgrou
 <body><script>${runtime}
 const LIST=${JSON.stringify(list)};const N=${Number(cols)};
 for(const a of LIST){const row=document.createElement('div');row.className='row';row.innerHTML='<b>'+a.id+'</b>';document.body.append(row);
- for(let k=0;k<N;k++){const f=Math.round(k*a.frames/N);const c=document.createElement('canvas');const H=150;c.height=H;c.width=Math.round(H*a.w/a.h);
+ const Q=new URLSearchParams(location.search);const at=Number(Q.get('at')||0.3);const FR=Q.get('states')?Object.values(a.states).map(st=>Math.round(st.from+(st.to-st.from)*at)):Array.from({length:N},(_,k)=>Math.round(k*a.frames/N));
+ for(const f of FR){const c=document.createElement('canvas');const H=Number(new URLSearchParams(location.search).get('h'))||150;c.height=H;c.width=Math.round(H*a.w/a.h);
   row.append(c);renderFrame(c.getContext('2d'),a,f,c.width,c.height,{background:a.bg});const ctx=c.getContext('2d');ctx.fillStyle='#000';ctx.fillText(f,4,12);}}
 </script>`;
 writeFileSync(out, html);

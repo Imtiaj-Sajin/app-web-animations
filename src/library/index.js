@@ -1,20 +1,35 @@
 /*
  * The catalogue. Packs group related animations; singles are standalone pieces.
- * Every animation is also listed individually so it can be downloaded on its own.
+ * Animations that share a `family` are colourways of one character and show up as one card with swatches.
  */
-import { bloo, peach, sunny, buddiesTrio } from './animations/buddies.js';
+import { bloo, peach, sunny, minty, lulu, buddiesTrio } from './animations/buddies.js';
 import { heartLike, successCheck, blobLoader, bellRing, squishToggle } from './animations/micro.js';
+import { aceVariants, scoutVariants, boltVariants, tellyVariants, retroClub } from './animations/retro.js';
 
-export const animations = [buddiesTrio, bloo, peach, sunny, heartLike, successCheck, bellRing, squishToggle, blobLoader];
+export const animations = [
+  retroClub, ...scoutVariants, ...aceVariants, ...boltVariants, ...tellyVariants,
+  buddiesTrio, bloo, peach, sunny, minty, lulu,
+  heartLike, successCheck, bellRing, squishToggle, blobLoader,
+].map((a) => ({ family: a.id, ...a }));
+
+const ids = (list) => list.map((a) => a.id);
 
 export const packs = [
   {
+    id: 'retro-club',
+    name: 'Retro Club',
+    tagline: 'Atomic-age mascots with 1950s swagger.',
+    description: 'Scout in his sunburst badge, Ace the varsity mascot, Bolt the tin robot and Telly the TV — four colourways each, every one with a stack of tap reactions.',
+    color: '#E2483D',
+    items: ids([...scoutVariants, ...aceVariants, ...boltVariants, ...tellyVariants]),
+  },
+  {
     id: 'blob-buddies',
     name: 'Blob Buddies',
-    tagline: 'Three squishy mascots with real personalities.',
-    description: 'Cursor-following eyes, breathing idles, and a signature reaction each. Drop one into an empty state, onboarding screen or 404 page.',
+    tagline: 'Five squishy mascots with real personalities.',
+    description: 'Cursor-following eyes, breathing idles, and a signature reaction plus love, grumpy and party moods. Perfect for empty states and onboarding.',
     color: '#2F6BFF',
-    items: ['bloo', 'peach', 'sunny'],
+    items: ['bloo', 'peach', 'sunny', 'minty', 'lulu'],
   },
   {
     id: 'micro-moments',
@@ -26,4 +41,4 @@ export const packs = [
   },
 ];
 
-export const singles = ['buddies-trio'];
+export const singles = ['retro-club', 'buddies-trio'];

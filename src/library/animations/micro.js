@@ -1,19 +1,9 @@
-import { defineAnimation, T, ease, hex, ellipse, heart, poly, arc, rect, g, shape } from '../../core/dsl.js';
+import { defineAnimation, T, ease, hex, ellipse, heart, poly, arc, rect, g, shape, burst as dslBurst } from '../../core/dsl.js';
+
+const burst = (cx, cy, o) => dslBurst(cx, cy, { colors: BURST, ...o });
 
 const INK = hex('#1B1B22');
 const BURST = ['#FF3B5C', '#FFB020', '#2F6BFF', '#22C38E'];
-
-/** Radial burst of dots — returns nodes animated between frames t and t+dur. */
-function burst(cx, cy, { t, dur = 30, count = 8, r0 = 36, r1 = 92, size = 6, rot = 22.5, colors = BURST }) {
-  return Array.from({ length: count }, (_, k) => {
-    const a = ((k * 360) / count + rot) * (Math.PI / 180);
-    const far = k % 2 ? r1 * 0.82 : r1;
-    const p = T([cx + Math.cos(a) * r0, cy + Math.sin(a) * r0]).hold(t)
-      .to(t + dur, [cx + Math.cos(a) * far, cy + Math.sin(a) * far], ease.out);
-    const s = T([0, 0]).hold(t).to(t + 1, [1, 1], null).hold(t + dur * 0.35).to(t + dur, [0, 0], ease.in);
-    return g({ p, a: [0, 0], s }, [shape(ellipse(0, 0, k % 2 ? size * 0.75 : size), { fill: hex(colors[k % colors.length]) })]);
-  });
-}
 
 export const heartLike = (() => {
   const C = [120, 124];

@@ -20,6 +20,13 @@ export function hex(h, a = 1) {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, a];
 }
 
+/** Darken (amount > 0) or lighten (amount < 0) a hex colour; returns hex. */
+export function shade(h, amount) {
+  const [r, g, b] = hex(h);
+  const f = (c) => Math.round(Math.max(0, Math.min(1, amount >= 0 ? c * (1 - amount) : c + (1 - c) * -amount)) * 255);
+  return '#' + [f(r), f(g), f(b)].map((n) => n.toString(16).padStart(2, '0')).join('');
+}
+
 function mix(a, b, t) {
   if (typeof a === 'number') return a + (b - a) * t;
   if (Array.isArray(a)) return a.map((v, n) => mix(v, b[n], t));
@@ -111,15 +118,19 @@ export function ellipse(cx, cy, rx, ry = rx) {
   };
 }
 
-/** Rounded rectangle, always 8 vertices so it can morph to/from any other rect. */
+/**
+ * Rounded rectangle, always 8 vertices so it can morph to/from any other rect.
+ * r: one radius or [topLeft, topRight, bottomRight, bottomLeft].
+ */
 export function rect(x, y, w, h, r = 0) {
-  r = Math.min(r, w / 2, h / 2);
-  const k = r * KAPPA;
+  const lim = (v) => Math.min(v, w / 2, h / 2);
+  const [tl, tr, br, bl] = (Array.isArray(r) ? r : [r, r, r, r]).map(lim);
+  const k = KAPPA;
   return {
     c: true,
-    v: [[x + r, y], [x + w - r, y], [x + w, y + r], [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h], [x, y + h - r], [x, y + r]],
-    i: [[-k, 0], [0, 0], [0, -k], [0, 0], [k, 0], [0, 0], [0, k], [0, 0]],
-    o: [[0, 0], [k, 0], [0, 0], [0, k], [0, 0], [-k, 0], [0, 0], [0, -k]],
+    v: [[x + tl, y], [x + w - tr, y], [x + w, y + tr], [x + w, y + h - br], [x + w - br, y + h], [x + bl, y + h], [x, y + h - bl], [x, y + tl]],
+    i: [[-tl * k, 0], [0, 0], [0, -tr * k], [0, 0], [br * k, 0], [0, 0], [0, bl * k], [0, 0]],
+    o: [[0, 0], [tr * k, 0], [0, 0], [0, br * k], [0, 0], [-bl * k, 0], [0, 0], [0, -tl * k]],
   };
 }
 
@@ -202,6 +213,12 @@ export function heart(cx, cy, size) {
   };
 }
 
+/** Four-point sparkle star centred on (cx, cy). */
+export function sparkle(cx, cy, r, pinch = 0.22) {
+  const q = r * pinch;
+  return poly([[cx, cy - r], [cx + q, cy - q], [cx + r, cy], [cx + q, cy + q], [cx, cy + r], [cx - q, cy + q], [cx - r, cy], [cx - q, cy - q]], true);
+}
+
 export function translatePath(d, dx, dy) {
   return { ...d, v: d.v.map(([x, y]) => [x + dx, y + dy]) };
 }
@@ -238,6 +255,41 @@ export function shape(d, { fill, stroke, trim, id, name, o, p, s, r, a } = {}) {
   if (o !== undefined) tr.o = o;
   if (Object.keys(tr).length) n.tr = tr;
   return n;
+}
+
+/** Radial burst of dots between frames t and t+dur. */
+export function burst(cx, cy, { t, dur = 30, count = 8, r0 = 36, r1 = 92, size = 6, rot = 22.5, colors }) {
+  return Array.from({ length: count }, (_, k) => {
+    const a = ((k * 360) / count + rot) * (Math.PI / 180);
+    const far = k % 2 ? r1 * 0.82 : r1;
+    const p = T([cx + Math.cos(a) * r0, cy + Math.sin(a) * r0]).hold(t)
+      .to(t + dur, [cx + Math.cos(a) * far, cy + Math.sin(a) * far], ease.out);
+    const s = T([0, 0]).hold(t).to(t + 1, [1, 1], null).hold(t + dur * 0.35).to(t + dur, [0, 0], ease.in);
+    return g({ p, a: [0, 0], s }, [shape(ellipse(0, 0, k % 2 ? size * 0.75 : size), { fill: hex(colors[k % colors.length]) })]);
+  });
+}
+
+/**
+ * Run timeline segments over a bag of tracks. Before each segment every track is held to its start,
+ * and the build fails if a segment's motion spills past its end — so states always start at rest.
+ * segments: [{ from, to, run(tracks, seg) }]
+ */
+export function choreograph(label, tracks, segments, end) {
+  const all = [];
+  const collect = (v) => {
+    if (v instanceof Track) all.push(v);
+    else if (Array.isArray(v)) v.forEach(collect);
+    else if (v && typeof v === 'object') Object.values(v).forEach(collect);
+  };
+  collect(tracks);
+  for (const seg of segments) {
+    all.forEach((t) => t.hold(seg.from));
+    seg.run(tracks, seg);
+    const late = Math.max(...all.map((t) => t.end));
+    if (late > seg.to) throw new Error(`${label}: segment at ${seg.from} runs to frame ${late}, past its end ${seg.to}`);
+  }
+  all.forEach((t) => t.hold(end));
+  return tracks;
 }
 
 // ---------------------------------------------------------------- compile
