@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plush Motion — free premium animations for web & apps</title>
+  <meta name="description" content="Hand-tuned, spring-physics animations for websites and apps. Free forever. Download as React, Web Component, Lottie, dotLottie, SVG, MP4, WebM, GIF, SwiftUI or Jetpack Compose.">
+  <meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E0E12" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#library">Skip to the library</a>
+
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="Plush Motion home">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 4c9 0 16 5 16 15 0 9-6 17-16 17S4 29 4 20C4 10 11 4 20 4z" fill="#2F6BFF"/>
+        <ellipse cx="15" cy="19" rx="2" ry="2.8" fill="#16161D"/>
+        <ellipse cx="25" cy="19" rx="2" ry="2.8" fill="#16161D"/>
+        <path d="M17 25q3 2.6 6 0" stroke="#16161D" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <span>Plush<b>Motion</b></span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="#packs">Packs</a>
+      <a href="#library">Library</a>
+      <a href="#formats">Formats</a>
+      <a href="#how">How to use</a>
+    </nav>
+    <a class="btn btn-ink btn-sm" href="downloads/plush-everything.zip" download data-everything>Get everything</a>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="pulse" aria-hidden="true"></span>Free forever · MIT licence · No sign-up</p>
+        <h1>Motion that makes your product feel <em>expensive.</em></h1>
+        <p class="lede">Hand-tuned animations with real spring physics, ready to drop into your website or app. Pick one, choose your format — React, SwiftUI, Lottie, MP4 and more — done.</p>
+        <div class="cta">
+          <a class="btn btn-ink" href="#library">Browse the library</a>
+          <a class="btn btn-ghost" href="downloads/plush-everything.zip" download data-everything>Download everything <span class="muted" data-everything-size></span></a>
+        </div>
+        <dl class="stats">
+          <div><dt>Animations</dt><dd data-stat="animations">–</dd></div>
+          <div><dt>Formats</dt><dd>11</dd></div>
+          <div><dt>Runtime</dt><dd>10&nbsp;KB</dd></div>
+          <div><dt>Price</dt><dd>$0</dd></div>
+        </dl>
+      </div>
+      <figure class="hero-stage">
+        <canvas id="hero-canvas"></canvas>
+        <figcaption class="hint"><span class="hint-dot" aria-hidden="true"></span>Move your cursor — they’re watching. Tap to cheer.</figcaption>
+      </figure>
+    </section>
+
+    <section class="formats" id="formats" aria-labelledby="formats-title">
+      <h2 class="visually-hidden" id="formats-title">Every format</h2>
+      <ul class="format-row" data-formats></ul>
+    </section>
+
+    <section class="section" id="packs" aria-labelledby="packs-title">
+      <header class="section-head">
+        <div>
+          <p class="eyebrow">Collections</p>
+          <h2 id="packs-title">Packs</h2>
+        </div>
+        <p class="section-lede">Curated sets that share one visual language. Grab a whole pack in a single zip, every format included.</p>
+      </header>
+      <div class="packs" data-packs></div>
+    </section>
+
+    <section class="section" id="library" aria-labelledby="library-title">
+      <header class="section-head">
+        <div>
+          <p class="eyebrow">Everything, one by one</p>
+          <h2 id="library-title">Library</h2>
+        </div>
+        <div class="filters" role="group" aria-label="Filter animations" data-filters></div>
+      </header>
+      <div class="grid" data-grid></div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <header class="section-head">
+        <div>
+          <p class="eyebrow">Two minutes, start to finish</p>
+          <h2 id="how-title">How to use</h2>
+        </div>
+      </header>
+      <ol class="steps">
+        <li>
+          <span class="step-n">1</span>
+          <h3>Pick an animation</h3>
+          <p>Play with it right here. Tap it, hover it, watch it follow your cursor — what you see is exactly what ships.</p>
+        </li>
+        <li>
+          <span class="step-n">2</span>
+          <h3>Choose your format</h3>
+          <p>Web Component or React for sites, SwiftUI or Compose for apps, Lottie for design tools, MP4 or GIF for anywhere else.</p>
+        </li>
+        <li>
+          <span class="step-n">3</span>
+          <h3>Drop it in</h3>
+          <pre><code>&lt;script type="module" src="bloo.wc.js"&gt;&lt;/script&gt;
+&lt;plush-bloo&gt;&lt;/plush-bloo&gt;</code></pre>
+        </li>
+      </ol>
+    </section>
+
+    <section class="section faq" aria-labelledby="faq-title">
+      <header class="section-head">
+        <div>
+          <p class="eyebrow">Good questions</p>
+          <h2 id="faq-title">FAQ</h2>
+        </div>
+      </header>
+      <div class="faq-list">
+        <details>
+          <summary>Is it really free for commercial projects?</summary>
+          <p>Yes. Everything is MIT licensed — use it in client work, SaaS products and paid apps. Credit is appreciated, never required.</p>
+        </details>
+        <details>
+          <summary>Why do the web versions feel smoother than a normal Lottie?</summary>
+          <p>The Web Component, React and JS versions run the Plush runtime, which adds live behaviour on top of the timeline: eyes that follow the pointer with a critically-damped spring, and soft blending when you interrupt one state with another.</p>
+        </details>
+        <details>
+          <summary>Do they respect reduced-motion settings?</summary>
+          <p>Yes. With “reduce motion” turned on, looping idles rest on a still pose and only play when the user interacts. The SwiftUI and Compose versions follow the system setting too.</p>
+        </details>
+        <details>
+          <summary>Where’s the Rive version?</summary>
+          <p>Rive files can only be authored in the Rive editor, so they’re being rebuilt there by hand. Until then, the Lottie and native versions cover the same platforms.</p>
+        </details>
+        <details>
+          <summary>Can I change the colours?</summary>
+          <p>Every format is plain, readable data. Edit the colours in the Lottie JSON or SVG directly, or in the <code>.plush.json</code> and the runtime picks them up.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p><strong>Plush Motion</strong> — made with care, given away free.</p>
+    <p class="muted">Characters and animations are original works. MIT licence.</p>
+  </footer>
+
+  <dialog class="detail" id="detail" aria-labelledby="detail-title">
+    <div class="detail-wrap">
+      <div class="detail-stage" data-stage>
+        <canvas id="detail-canvas"></canvas>
+        <div class="stage-controls">
+          <div class="chips" role="group" aria-label="Play a state" data-states></div>
+          <div class="swatches" role="radiogroup" aria-label="Preview background" data-swatches></div>
+        </div>
+      </div>
+      <div class="detail-info">
+        <form method="dialog"><button class="icon-btn close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button></form>
+        <p class="eyebrow" data-d-eyebrow></p>
+        <h2 id="detail-title" data-d-title></h2>
+        <p class="detail-desc" data-d-desc></p>
+        <ul class="tags" data-d-tags></ul>
+        <a class="btn btn-ink btn-wide" data-d-all download>Download all formats</a>
+        <div class="format-groups" data-d-formats></div>
+        <div class="usage">
+          <div class="usage-tabs" role="tablist" aria-label="Usage examples" data-d-tabs></div>
+          <div class="code">
+            <pre><code data-d-code></code></pre>
+            <button class="btn btn-ghost btn-sm copy" data-copy>Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>
