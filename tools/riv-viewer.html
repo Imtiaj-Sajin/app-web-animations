@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rive Study Viewer</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f6f4ef; --ink: #16161d; --line: rgba(22,22,29,.12); --card: #fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0e0e12; --ink: #f4f2ec; --line: rgba(255,255,255,.12); --card: #18181f; } }
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 16px; height: 100dvh; box-sizing: border-box; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; height: auto; } }
+  .stage { background: var(--card); border: 1px solid var(--line); border-radius: 20px; position: relative; min-height: 360px; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  aside { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; overflow: auto; }
+  h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 18px 0 6px; }
+  select, button { font: inherit; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: inherit; cursor: pointer; }
+  button:hover { border-color: currentColor; } .row { display: flex; flex-wrap: wrap; gap: 6px; } .note { font-size: 13px; opacity: .7; }
+  label { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="stage"><canvas id="c"></canvas></div>
+  <aside>
+    <h1>Rive study viewer</h1>
+    <p class="note">Local only — plays the third-party .riv files in the repo root with the official runtime. Not part of the library or the website build.</p>
+    <h2>File</h2>
+    <select id="file"></select>
+    <div id="info"></div>
+  </aside>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.44.2/rive.js"></script>
+<script>
+  const canvas = document.getElementById('c');
+  const info = document.getElementById('info');
+  const select = document.getElementById('file');
+  let r = null;
+  const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+
+  function load(src, sm) {
+    r?.cleanup();
+    r = new rive.Rive({
+      src, canvas, autoplay: true, stateMachines: sm,
+      layout: new rive.Layout({ fit: rive.Fit.Contain }),
+      onLoad: () => {
+        const first = r.contents.artboards[0]?.stateMachines[0]?.name;
+        if (!sm && first) return load(src, first); // run the state machine so pointer input works
+        r.resizeDrawingSurfaceToCanvas();
+        render(src);
+      },
+    });
+  }
+
+  function render(src) {
+    info.replaceChildren();
+    for (const ab of r.contents.artboards) {
+      info.append(el('h2', { textContent: `Artboard · ${ab.name}` }));
+      if (ab.stateMachines.length) {
+        info.append(el('p', { className: 'note', textContent: 'State machines (click to run):' }));
+        info.append(el('div', { className: 'row' }, ...ab.stateMachines.map((sm) => el('button', { textContent: sm.name, onclick: () => load(src, sm.name) }))));
+      }
+      const active = r.playingStateMachineNames?.[0];
+      if (active) {
+        const inputs = r.stateMachineInputs(active) || [];
+        info.append(el('p', { className: 'note', textContent: `Inputs of “${active}” (${inputs.length}):` }));
+        info.append(el('div', { className: 'row' }, ...inputs.map((inp) => {
+          if (inp.type === rive.StateMachineInputType.Trigger) return el('button', { textContent: `▶ ${inp.name}`, onclick: () => inp.fire() });
+          if (inp.type === rive.StateMachineInputType.Boolean) {
+            const cb = el('input', { type: 'checkbox', checked: !!inp.value, onchange: () => (inp.value = cb.checked) });
+            return el('label', {}, cb, inp.name);
+          }
+          const n = el('input', { type: 'range', min: 0, max: 100, value: inp.value ?? 0, oninput: () => (inp.value = Number(n.value)) });
+          return el('label', {}, inp.name, n);
+        })));
+      }
+      if (ab.animations.length) {
+        info.append(el('p', { className: 'note', textContent: 'Timeline animations:' }));
+        info.append(el('div', { className: 'row' }, ...ab.animations.map((name) => el('button', { textContent: name, onclick: () => { r.stop(); r.play(name); } }))));
+      }
+    }
+    window.__rive = { contents: r.contents, playing: r.playingStateMachineNames, anims: r.playingAnimationNames };
+  }
+
+  addEventListener('resize', () => r?.resizeDrawingSurfaceToCanvas());
+  fetch('/riv-list').then((x) => x.json()).then((files) => {
+    select.append(...files.map((f) => el('option', { value: f, textContent: f })));
+    const pick = new URLSearchParams(location.search).get('file');
+    if (pick) select.value = pick;
+    select.onchange = () => load(`/riv/${encodeURIComponent(select.value)}`);
+    load(`/riv/${encodeURIComponent(select.value)}`);
+  });
+</script>
+</body>
+</html>

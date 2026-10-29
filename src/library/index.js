@@ -4,10 +4,10 @@
  */
 import { bloo, peach, sunny, minty, lulu, buddiesTrio } from './animations/buddies.js';
 import { heartLike, successCheck, blobLoader, bellRing, squishToggle } from './animations/micro.js';
-import { aceVariants, scoutVariants, boltVariants, tellyVariants, retroClub } from './animations/retro.js';
+import { aceVariants, scoutVariants, scoutHeroVariants, boltVariants, tellyVariants, retroClub } from './animations/retro.js';
 
 export const animations = [
-  retroClub, ...scoutVariants, ...aceVariants, ...boltVariants, ...tellyVariants,
+  retroClub, ...scoutHeroVariants, ...scoutVariants, ...aceVariants, ...boltVariants, ...tellyVariants,
   buddiesTrio, bloo, peach, sunny, minty, lulu,
   heartLike, successCheck, bellRing, squishToggle, blobLoader,
 ].map((a) => ({ family: a.id, ...a }));
@@ -21,7 +21,7 @@ export const packs = [
     tagline: 'Atomic-age mascots with 1950s swagger.',
     description: 'Scout in his sunburst badge, Ace the varsity mascot, Bolt the tin robot and Telly the TV — four colourways each, every one with a stack of tap reactions.',
     color: '#E2483D',
-    items: ids([...scoutVariants, ...aceVariants, ...boltVariants, ...tellyVariants]),
+    items: ids([...scoutHeroVariants, ...scoutVariants, ...aceVariants, ...boltVariants, ...tellyVariants]),
   },
   {
     id: 'blob-buddies',

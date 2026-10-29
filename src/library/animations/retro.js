@@ -1,6 +1,7 @@
 import { defineAnimation } from '../../core/dsl.js';
 import { ace, ACE_STYLES, ACE_TIMELINE, SCOUT_STYLES } from '../retro/ace.js';
 import { bolt, BOLT_STYLES, BOLT_TIMELINE } from '../retro/bolt.js';
+import { scoutPose, SCOUT_POSE_TIMELINE } from '../retro/scout-pose.js';
 import { telly, TELLY_STYLES, TELLY_TIMELINE } from '../retro/telly.js';
 export const aceVariants = Object.entries(ACE_STYLES).map(([style, S]) => {
   const id = `ace-${style}`;
@@ -89,6 +90,22 @@ export const scoutVariants = Object.entries(SCOUT_STYLES).map(([style, S]) => {
     states: ACE_TIMELINE.states,
     initial: 'idle',
     interact: { tap: ['thumbs', 'cheer', 'nod'], look: c.look },
+    layers: [c.node],
+  });
+});
+
+export const scoutHeroVariants = Object.entries(SCOUT_STYLES).map(([style, S]) => {
+  const id = `scout-hero-${style}`;
+  const c = scoutPose({ id, style, ...SCOUT_POSE_TIMELINE });
+  return defineAnimation({
+    id, name: `Scout Hero · ${S.name}`, family: 'scout-hero', familyName: 'Scout · Hero Pose', variant: S.name, swatch: S.primary,
+    category: 'Characters', bg: S.bg,
+    description: 'Scout striking the classic poster pose — three-quarter view, hands on hips. Tap and he swings into a thumbs-up with a wink; tap again and he cracks up laughing.',
+    tags: ['mascot', 'retro', '1950s', 'thumbs-up', 'hero-pose'],
+    w: 400, h: 460,
+    states: SCOUT_POSE_TIMELINE.states,
+    initial: 'idle',
+    interact: { tap: ['thumbs', 'laugh'], look: c.look },
     layers: [c.node],
   });
 });
